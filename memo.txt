@@ -1,2 +1,11 @@
+// 사전 설치 항목
+pip install fastapi==0.104.1
+pip install uvicorn==0.27.0.post1
+pip install sqlalchemy==1.4.39
+pip install pymysql==1.1.0
+pip install jinja2==3.1.2
+pip install itsdangerous
+pip install bcrypt==3.2.0
+
 // 서버 시작
 uvicorn main:app --reload
