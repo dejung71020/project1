@@ -11,6 +11,7 @@ from dependencies import get_db
 from data import products as product_data
 from pydantic import BaseModel
 from data import auth as auth_data
+from routers import auth, memos, orders
 
 # .env 파일 로드
 load_dotenv()
@@ -33,6 +34,7 @@ Base.metadata.create_all(bind=engine)
 # 라우터 등록
 app.include_router(auth.router)
 app.include_router(memos.router)
+app.include_router(orders.router)
 
 @app.get("/") 
 async def main_page(request: Request, db: Session = Depends(get_db)):
