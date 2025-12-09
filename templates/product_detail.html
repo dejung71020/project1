@@ -354,17 +354,15 @@
               </button>
             </div>
 
-            <div class="action-buttons row px-3">
-              <button class="btn btn-cart col-5 mr-2">
-                <i class="fas fa-shopping-cart"></i> 장바구니
-              </button>
-              <button
-                class="btn btn-buy col"
-                onclick="buyItem({{ product.id }})"
-              >
-                구매하기
-              </button>
-            </div>
+            <button class="btn btn-lg btn-outline-danger btn-block mb-2">
+              <i class="fas fa-shopping-cart"></i> 장바구니 담기
+            </button>
+            <button
+              class="btn btn-lg btn-danger btn-block"
+              onclick="buyItem({{ product.id }})"
+            >
+              구매하기
+            </button>
           </div>
         </div>
 
