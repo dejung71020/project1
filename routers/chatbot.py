@@ -19,7 +19,7 @@ async def chat(req: ChatRequest):
         "Content-Type": "application/json"
     }
     data = {
-        "model": "gpt-4o-mini",  # 사용할 모델
+        "model": "gpt-5-nano",  # 사용할 모델 
         "messages": [{"role": "user", "content": req.message}]
     }
 
