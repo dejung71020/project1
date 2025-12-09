@@ -49,7 +49,7 @@ async def chat(req: ChatRequest):
     )        
 
     data = {
-        "model": "gpt-5-nano",
+        "model": "gpt-4.1-mini",
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": req.message}
