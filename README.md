@@ -1,178 +1,146 @@
-📘 프로젝트 문서: 경수오빠못해조 (Pet Shop & Community)
-1. 프로젝트 개요
-프로젝트명: 경수오빠못해조
+# 🛒 애완용품샵 — 반려동물 이커머스 백엔드
 
-설명: 반려동물(강아지, 고양이, 조류, 기타 동물) 용품을 판매하는 이커머스 기능과 사용자 간 소통을 위한 자유 게시판(메모) 기능을 결합한 웹 애플리케이션입니다.
+> 반려동물 용품 이커머스 백엔드. FastAPI REST API 설계부터 AI 챗봇 연동, 5명 팀의 첫 협업 프로젝트.
 
-주요 기능: 회원가입/로그인, 카테고리별 상품 조회, 상품 상세 및 리뷰 작성, 자유 게시판(CRUD)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS_RDS-FF9900?style=flat-square&logo=amazonaws&logoColor=white)
 
-2. 활용 기술 (Tech Stack)
-Backend
-Language: Python 3.12+
+---
 
-Framework: FastAPI (REST API 구축 및 웹 서버 기능)
+## 📌 프로젝트 개요
 
-ORM: SQLAlchemy (데이터베이스 상호작용 추상화)
+| 항목 | 내용 |
+|---|---|
+| 기간 | 2025.12 – 2026.01 (1.5개월) |
+| 팀 구성 | 5명 |
+| 담당 | 백엔드 개발 |
+| 아키텍처 | MVC (Flat Structure) |
 
-Security: passlib[bcrypt], python-jose (비밀번호 해싱 및 인증 처리)
+---
 
-Database
-RDBMS: MySQL (실제 데이터 저장소)
+## 🛠 기술 스택
 
-Hosting: Amazon RDS (AWS 클라우드 데이터베이스 서비스)
+| 분류 | 기술 |
+|---|---|
+| Backend | FastAPI, SQLAlchemy, Pydantic |
+| Database | MySQL, AWS RDS |
+| AI | OpenAI GPT-4.1-mini |
+| Auth | Session 기반 (SessionMiddleware) |
+| ML | Scikit-learn (RandomForest 추천 시스템) |
+| Data | Selenium 크롤러 |
 
-Driver: pymysql (Python-MySQL 커넥터)
+---
 
-Frontend
-Language: HTML5, CSS3, JavaScript
+## ✨ 핵심 구현
 
-Templating Engine: Jinja2 (서버 사이드 렌더링)
+### 1. 주문 / 재고 트랜잭션 원자성 보장
 
-Framework: Bootstrap 4.3.1 (반응형 디자인 및 UI 컴포넌트)
+결제 · 재고 차감 · 주문 기록이 개별 처리될 경우, 서버 다운 시 데이터 불일치가 발생할 수 있습니다.
 
-Library: jQuery, FontAwesome (아이콘)
+**해결:** 하나의 트랜잭션으로 묶어 처리 — 실패 시 전체 롤백
 
-Infrastructure & Tools
-Environment: .env (환경 변수 관리 - python-dotenv)
+```python
+def create_order(db: Session, user_id: int, items: List[Dict]):
+    try:
+        # 1. 재고 확인
+        # 2. 주문서 생성 (Orders)
+        # 3. 상세 품목 기록 (Order_Items)
+        # 4. 재고 차감 + 판매수 증가
+        db.commit()
+        return order_id
+    except Exception as e:
+        db.rollback()
+        raise e
+```
 
-Server: Uvicorn (ASGI 서버)
+**결과:** 데이터 불일치 0건 유지
 
-3. 파일 구조 (File Structure)
-프로젝트는 MVC(Model-View-Controller) 패턴과 유사하게 데이터(Data), 라우터(Router), 템플릿(Templates)으로 구조화되어 있습니다.
+### 2. OpenAI 챗봇 환각 차단
 
-Plaintext
+OpenAI API를 연동한 고객센터 챗봇이 사이트와 무관한 질문에도 답변하는 환각 현상이 발생했습니다.
 
-project1/
-├── main.py                  # [진입점] 앱 초기화, 미들웨어 설정, 메인/상품 라우팅
-├── database.py              # DB 연결 설정 (Engine, SessionLocal 생성)
-├── dependencies.py          # 의존성 주입 (DB 세션 생성, 비밀번호 해시/검증)
-├── schemas.py               # Pydantic 모델 (요청/응답 데이터 검증)
-├── .env                     # 환경 변수 (DB URL, Secret Key)
-│
-├── routers/                 # [Controller] URL 라우팅 및 비즈니스 로직 처리
-│   ├── auth.py              # 인증 관련 라우터 (회원가입, 로그인, 로그아웃)
-│   └── memos.py             # 게시판 관련 라우터 (CRUD)
-│
-├── data/                    # [Model/DAO] 데이터베이스 쿼리 함수 집합
-│   ├── auth.py              # 사용자(User) 테이블 쿼리
-│   ├── memos.py             # 메모(Memo) 테이블 쿼리
-│   └── products.py          # 상품(PetItem), 리뷰(Reviews) 테이블 쿼리
-│
-└── templates/               # [View] 사용자 인터페이스 (HTML)
-    ├── home.html            # 로그인/회원가입 페이지
-    ├── main.html            # 메인 페이지 (상품 추천, 네비게이션)
-    ├── products.html        # 카테고리별 상품 목록 페이지
-    ├── product_detail.html  # 상품 상세 및 리뷰 페이지
-    └── memos.html           # 자유 게시판 페이지
-4. 데이터베이스 설계 (ERD)
-Amazon RDS(MySQL)에 구축된 테이블 구조입니다.
+**해결:** 예상 Q&A 50개를 JSON으로 구조화 → system_prompt에 전체 주입 → 관련 없는 질문은 모두 거절
 
-1) Users (사용자)
-회원 정보를 저장합니다.
+```python
+faq_context = "\n".join([f"Q: {item['question']} A: {item['answer']}"
+                          for item in faq_data])
 
-Columns: id (PK), username (Unique), email, hashed_password
+system_prompt = (
+    "너는 특정사이트 고객센터 직원이다. "
+    "반드시 아래 FAQ와 정책을 기반으로 답변하라.\n"
+    f"{faq_context}"
+)
+```
 
-2) Pet_Item (상품)
-판매 물품 정보를 저장합니다.
+**장점:** 별도 DB 없이 간단하게 환각 현상 제어
 
-Columns: id (PK), category (대분류: dog, cat...), sub_category (소분류), name, price, description, detail (HTML), image_url
+### 3. AWS RDS로 팀 DB 환경 통일
 
-3) Memo (게시판)
-사용자가 작성한 게시글입니다. User와 1:N 관계입니다.
+로컬 MySQL 대신 AWS RDS를 도입해 5명 전원이 동일한 DB 환경에서 개발
 
-Columns: id (PK), user_id (FK -> Users.id), title, content
+### 4. 랜덤포레스트 추천 시스템
 
-4) Reviews (리뷰)
-상품에 대한 후기입니다. Product, User와 각각 N:1 관계입니다.
+```
+recommend/
+├── recommend.py   # RandomForest 학습
+└── batch.py       # 시간별 배치 재학습
+```
 
-Columns: id (PK), product_id (FK -> Pet_Item.id), user_id (FK -> Users.id), content, created_at
+---
 
-5. 시스템 아키텍처 및 코드 흐름도 (Code Flow)
-사용자의 요청이 들어왔을 때 서버 내부에서 처리되는 흐름입니다. **계층형 아키텍처(Layered Architecture)**를 따르고 있습니다.
+## 🗄 DB 구조
 
-흐름도 (Flowchart)
-코드 스니펫
+```
+users        사용자 정보, 세션 인증
+products     상품 정보, 카테고리, 재고
+orders       주문 정보 (총금액)
+order_items  주문 상세 품목
+carts        장바구니 (로그아웃 후에도 유지)
+reviews      상품 리뷰
+memo         게시글 (CRUD)
+```
 
-graph TD
-    User((사용자))
-    
-    subgraph Frontend [Templates (View)]
-        HTML[HTML 페이지/JS]
-    end
+---
 
-    subgraph Backend [FastAPI Server]
-        Main[main.py (App Entry)]
-        
-        subgraph Routers [API Routes]
-            AuthRouter[routers/auth.py]
-            MemoRouter[routers/memos.py]
-            ProductRoutes[main.py 내 정의]
-        end
-        
-        subgraph DataLayer [Data Access Object]
-            DataAuth[data/auth.py]
-            DataMemo[data/memos.py]
-            DataProd[data/products.py]
-        end
-        
-        Schemas[schemas.py (Validation)]
-        DB_Conn[database.py / dependencies.py]
-    end
+## 📡 API 명세
 
-    subgraph Database [Amazon RDS]
-        MySQL[(MySQL DB)]
-    end
+| 도메인 | 엔드포인트 |
+|---|---|
+| Auth | POST /auth/signup, /auth/login, /auth/logout |
+| Products | GET /products, GET /products/{id}, POST /products/{id}/review |
+| Cart | POST /cart/add, GET /cart, DELETE /cart/remove/{id} |
+| Orders | POST /orders/buy/{id}, GET /orders/detail/{id} |
+| Memos | GET/POST /memos, PUT/DELETE /memos/{id} |
+| Chat | POST /chat |
 
-    User -->|HTTP Request| Main
-    Main -->|Mount| AuthRouter
-    Main -->|Mount| MemoRouter
-    
-    %% 회원가입/로그인 흐름
-    AuthRouter -->|Validate| Schemas
-    AuthRouter -->|Call| DataAuth
-    DataAuth -->|Query| DB_Conn
-    DB_Conn -->|SQL| MySQL
-    
-    %% 게시판 흐름
-    MemoRouter -->|Call| DataMemo
-    DataMemo -->|Query| DB_Conn
-    
-    %% 상품 흐름
-    ProductRoutes -->|Call| DataProd
-    DataProd -->|Query| DB_Conn
+---
 
-    %% 응답
-    MySQL -->|Result| DB_Conn
-    DB_Conn -->|Data| Backend
-    Backend -->|Render| HTML
-    HTML -->|Display| User
-주요 로직 상세
-초기화 (main.py):
+## 🚀 실행 방법
 
-.env 로드 및 DB 엔진/세션 설정.
+```bash
+git clone https://github.com/dejung71020/project1.git
+cd project1
 
-auth, memos 라우터 등록 (include_router).
+pip install -r requirements.txt
 
-정적 템플릿(Jinja2Templates) 설정.
+# .env 설정 (DATABASE_URL, SECRET_KEY, OPENAI_API_KEY)
+uvicorn main:app --reload
+```
 
-상품 조회 흐름:
+---
 
-요청: GET /products?category=dog&sub=food
+## 📁 프로젝트 구조
 
-처리: main.py의 product_list 함수 실행 -> data/products.py의 get_products_by_category 호출 -> SQL 실행.
-
-응답: 조회된 데이터를 products.html 템플릿에 담아 렌더링.
-
-게시글 작성 흐름:
-
-요청: POST /memos/ (JSON body: title, content)
-
-처리: routers/memos.py -> 세션에서 username 확인 (로그인 체크) -> data/memos.py의 create_memo 호출 -> DB Insert.
-
-응답: 성공 메시지 JSON 반환 (프론트엔드에서 JS로 새로고침 처리).
-
-데이터베이스 연결:
-
-database.py에서 create_engine으로 RDS에 연결.
-
-dependencies.py의 get_db 함수가 요청(Request)마다 DB 세션을 생성하고, 처리가 끝나면 자동으로 닫음(yield 패턴).
+```
+├── main.py          # 앱 진입점, 페이지 라우트 (/, /login, /mypage)
+├── database.py      # SQLAlchemy 엔진, Base
+├── dependencies.py  # get_db(), 비밀번호 해싱
+├── schemas.py       # Pydantic 모델
+├── routers/         # auth, products, cart, orders, memos, chatbot
+├── data/            # DAO 레이어 (raw SQL via sqlalchemy.text())
+├── recommend/       # RandomForest 학습 + 배치
+└── templates/       # Jinja2 HTML (SSR)
+```
